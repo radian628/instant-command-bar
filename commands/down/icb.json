@@ -1,0 +1,7 @@
+{
+    "scripts": [
+        {
+            "filename": "./move.js"
+        }
+    ]
+}

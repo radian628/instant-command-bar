@@ -1,0 +1,12 @@
+{
+    "name": "instant-command-bar",
+    "version": "0.0.0",
+    "description": "Fast and configurable command palette to save you time.",
+    "main": "app.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "devDependencies": {
+        "electron": "^12.0.0"
+    }
+}

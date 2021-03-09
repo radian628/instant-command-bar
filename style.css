@@ -1,0 +1,65 @@
+body {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    color: #FFFFFF00;
+}
+
+#gui-container {
+    padding-top: 16px;
+    border-radius: 24px;
+    background: #000000BB;
+    -webkit-app-region: drag;
+}
+
+#gui-container * {
+    -webkit-app-region: no-drag;
+}
+
+#instant-command-bar {
+    margin: 0;
+    padding: 0 24px;
+    width: calc(100vw - 48px - 7px);
+    height: 48px;
+    font-size: 30px;
+    border: 3px solid #FFFFFF;
+    background-color: #444455;
+    color: #FFFFFF;
+    border-radius: 24px;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+#instant-command-bar:focus {
+    outline-width: 0;
+}
+
+#instant-command-feedback {
+    font-family: monospace;
+    font-size: 16px;
+    padding: 16px;
+    padding-top: 0px;
+}
+
+.out-failure {
+    color: #FF8888;
+}
+
+.out-cmdname-failure {
+    color: #CCBBBB;
+}
+
+.out-context-failure {
+    color: #FFBB99;
+}
+
+.out-success {
+    color: #88FF88;
+}
+
+.out-cmdname-success {
+    color: #BBCCBB;
+}
+
+.out-context-success {
+    color: #BBFF99;
+}
