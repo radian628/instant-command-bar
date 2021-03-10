@@ -1,2 +1,3 @@
 commands/note/notes/*
 node_modules
+frequencies.json

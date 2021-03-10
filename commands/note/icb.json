@@ -3,5 +3,6 @@
         {
             "filename": "./note.js"
         }
-    ]
+    ],
+    "contributeToFrequencyHints": false
 }

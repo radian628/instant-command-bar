@@ -7,6 +7,10 @@ let container = document.getElementById("gui-container");
 let cmdStack = [];
 let cmdPointer = 0;
 
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
 function setWindowHeight() {
     ipcRenderer.send("set-window-height", container.scrollHeight);
 }
@@ -51,10 +55,14 @@ document.addEventListener("keydown", (evt) => {
         cmdPointer = cmdStack.length;
         instantCommandBar.value = "";
     } else if (evt.key == "ArrowUp") {
-        cmdPointer--;
+        cmdPointer = clamp(cmdPointer - 1, 0, cmdStack.length - 1);
         instantCommandBar.value = cmdStack[cmdPointer];
     } else if (evt.key == "ArrowDown") {
-        cmdPointer++;
-        instantCommandBar.value = cmdStack[cmdPointer];
+        cmdPointer = clamp(cmdPointer + 1, 0, cmdStack.length);
+        if (cmdPointer == cmdStack.length) {
+            instantCommandBar.value = "";
+        } else {
+            instantCommandBar.value = cmdStack[cmdPointer];
+        }
     }
 });

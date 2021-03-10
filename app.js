@@ -2,8 +2,16 @@ const { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } = require("
 const fs = require("fs").promises;
 const path = require("path");
 const childProcess = require("child_process");
+const commandRunFrequencies = require("fs").existsSync("./data/frequencies.json") ? require("./data/frequencies.json") : {};
 
 let mainWindow;
+
+function applyDefault(value, defaultValue) {
+    if (value !== undefined) {
+        return value;
+    }
+    return defaultValue;
+}
 
 function Command(parentDir, cmdObject) {
     let scripts = cmdObject.scripts;
@@ -14,8 +22,17 @@ function Command(parentDir, cmdObject) {
 
     this.scripts = scripts;
 
-    this.autocomplete = cmdObject.autocomplete;
+    this.contributeToFrequencyHints = applyDefault(cmdObject.contributeToFrequencyHints, true);
     this.suggestions = cmdObject.suggestions;
+}
+
+function addCommandFrequency(cmd) {
+    if (commandRunFrequencies[cmd]) {
+        commandRunFrequencies[cmd]++
+    } else {
+        commandRunFrequencies[cmd] = 1;
+    }
+    fs.writeFile("./data/frequencies.json", JSON.stringify(commandRunFrequencies));
 }
 
 Command.prototype.run = function (args) {
@@ -41,9 +58,15 @@ Command.prototype.run = function (args) {
                     break;
                 case "success":
                     mainWindow.webContents.send("icb-cmd-success", args, msg.data);
+                    if (applyDefault(msg.contributeToFrequencyHints, this.contributeToFrequencyHints)) {
+                        addCommandFrequency(args);
+                    }
                     break;
                 case "open-external":
                     shell.openExternal(data);
+                    break;
+                case "kill":
+                    app.quit();
                     break;
             }
         });

@@ -25,22 +25,24 @@ function openNotePage() {
         Promise.all(notePromises).then(fileInfo => {
             let noteHTMLs = fileInfo.map( (fileDatum) => { 
                 return `
-                <h2>${fileDatum.filename}</h2>
-                <p>${fileDatum.fileContents.toString()}</p>
+                <div>
+                    <h2>${fileDatum.filename}</h2>
+                    <p>${fileDatum.fileContents.toString()}</p>
+                </div>
             ` } );
-    
-                console.log(fileInfo);
     
             let htmlContent = `
             <!DOCTYPE html>
             <html>
                 <head>
+                    <link type="text/css" rel="stylesheet" href="../notestyle.css">
                 </head>
                 <body>
                     <h1>Notes</h1>
-                    <div>
+                    <div id="note-container">
                         ${noteHTMLs.join("")}
                     </div>
+                    <script src="../notedisplay.js"></script>
                 </body>
             </html>
             `;
@@ -52,7 +54,8 @@ function openNotePage() {
                 });
                 process.send({
                     type: "success",
-                    data: `Opened notes.`
+                    data: `Opened notes.`,
+                    contributeToFrequencyHints: true
                 });
             });
         });
