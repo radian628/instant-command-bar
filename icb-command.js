@@ -70,6 +70,19 @@ module.exports = class ICBCommand extends EventEmitter {
         });
     }
 
+    addMacro(macroName, replaceText) {
+        this.emit("add-macro", {
+            macroName: macroName,
+            replaceText: replaceText 
+        });
+    }
+
+    removeMacro(macroName) {
+        this.emit("remove-macro", {
+            macroName: macroName
+        });
+    }
+
     /**
      * 
      */

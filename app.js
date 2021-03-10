@@ -3,6 +3,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const childProcess = require("child_process");
 const commandRunFrequencies = require("fs").existsSync("./data/frequencies.json") ? require("./data/frequencies.json") : {};
+const macros = require("fs").existsSync("./data/macros.json") ? require("./data/macros.json") : {};
 
 let mainWindow;
 
@@ -19,6 +20,16 @@ function addCommandFrequency(cmd) {
         commandRunFrequencies[cmd] = 1;
     }
     fs.writeFile("./data/frequencies.json", JSON.stringify(commandRunFrequencies));
+}
+
+function addMacro(macroName, replaceText) {
+    macros[macroName] = replaceText;
+    fs.writeFile("./data/macros.json", JSON.stringify(macros));
+}
+function removeMacro(macroName) {
+    console.log(macroName);
+    delete macros[macroName];
+    fs.writeFile("./data/macros.json", JSON.stringify(macros));
 }
 
 
@@ -54,6 +65,14 @@ Command.prototype.run = function (args) {
         app.quit();
     });
 
+    command.on("add-macro", event => {
+        addMacro(event.macroName, event.replaceText);
+    });
+
+    command.on("remove-macro", event => {
+        removeMacro(event.macroName);
+    });
+
     command.run(args);
 }
 
@@ -71,6 +90,7 @@ const Commands = {
     commands: {},
     run: function (cmd) {
         if (typeof cmd == "string") {
+            cmd = this.applyMacros(cmd);
             let cmdname = cmd.split(" ")[0];
             let command = this.commands[cmdname]
             if (command !== undefined) {
@@ -98,6 +118,26 @@ const Commands = {
         }).catch((reason) => {
             console.log(reason);
         });
+    },
+    applyMacros: function (str) {
+        let macroList = Object.keys(macros).map(macroName => {
+            return {
+                macroString: "$" + macroName,
+                replaceText: macros[macroName]
+            }
+        });
+        let modified = false;
+        macroList.forEach(macro => {
+            str = str.replaceAll(macro.macroString, () => {
+                modified = true;
+                return macro.replaceText;
+            });
+        });
+        if (modified) {
+            return this.applyMacros(str);
+        } else {
+            return str;
+        }
     }
 }
 
@@ -106,7 +146,6 @@ ipcMain.on("exec-icb-cmd", (evt, cmd) => {
 });
 
 ipcMain.on("hint-icb-cmd", (evt, cmd) => {
-    console.log(cmd);
     Commands.hint(cmd);
 });
 
