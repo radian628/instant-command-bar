@@ -2,9 +2,9 @@ const fs = require("fs").promises;
 const path = require("path");
 const ICBCommand = require("../icb-command");
 
-console.log(process.argv);
-
 const noteDir = path.join(__dirname, "./note/notes");
+
+fs.mkdir(noteDir, { recursive: true });
 
 function openNotePage(commandObject) {
     fs.readdir(noteDir).then(files => {
