@@ -1,4 +1,4 @@
-const process = require("process");
+const ICBCommand = require("../icb-command");
 
 let sqrt = Math.sqrt;
 let sin = Math.sin;
@@ -32,21 +32,14 @@ let toRadians = function (degrees) {
     return degrees * PI / 180;
 }
 
-process.on("message", data => {
-    let content = data.split(" ").slice(1).join(" ");
-    
-
-    try {
-        let result = eval(content);
-        process.send({
-            type: "success",
-            data: `Result: ${result}`
-        });
-    } catch (err) {
-        process.send({
-            type: "failure",
-            data: `JS Error: ${err}`
-        });
+module.exports = class extends ICBCommand {
+    run (data) {
+        let content = data.split(" ").slice(1).join(" ");
+        try {
+            let result = eval(content);
+            this.success(`Result: ${result}`);
+        } catch (err) {
+            this.failure(`JS Error: ${err}`);
+        }
     }
-
-});
+}

@@ -12,20 +12,6 @@ function applyDefault(value, defaultValue) {
     }
     return defaultValue;
 }
-
-function Command(parentDir, cmdObject) {
-    let scripts = cmdObject.scripts;
-
-    console.log(cmdObject);
-
-    this.parentDir = parentDir;
-
-    this.scripts = scripts;
-
-    this.contributeToFrequencyHints = applyDefault(cmdObject.contributeToFrequencyHints, true);
-    this.suggestions = cmdObject.suggestions;
-}
-
 function addCommandFrequency(cmd) {
     if (commandRunFrequencies[cmd]) {
         commandRunFrequencies[cmd]++
@@ -35,42 +21,73 @@ function addCommandFrequency(cmd) {
     fs.writeFile("./data/frequencies.json", JSON.stringify(commandRunFrequencies));
 }
 
+
+
+function Command(file) {
+    this.main = require(file);
+}
+
 Command.prototype.run = function (args) {
-    console.log(this.scripts);
-    this.scripts.forEach(script => {
-        let child = childProcess.fork(path.resolve(this.parentDir, script.filename), {
-            args: args
-        }, {
-            stdio: [ "pipe", "pipe", "pipe", "ipc" ]
+    //this.scripts.forEach(script => {
+    //    let child = childProcess.fork(path.resolve(this.parentDir, script.filename), {
+    //        args: args
+    //    }, {
+    //        stdio: [ "pipe", "pipe", "pipe", "ipc" ]
+    //    });
+        let command = new this.main();
+
+        command.on("translate-window", coords => {
+            let mainWinPos = mainWindow.getPosition();
+            mainWindow.setPosition(mainWinPos[0] + coords.x, mainWinPos[1] + coords.y);
         });
 
-        child.send(args);
-
-        child.on("message", msg => {
-            let data = msg.data;
-            switch (msg.type) {
-                case "translate-window":
-                    let mainWinPos = mainWindow.getPosition();
-                    mainWindow.setPosition(mainWinPos[0] + data.x, mainWinPos[1] + data.y);
-                    break;
-                case "failure":
-                    mainWindow.webContents.send("icb-cmd-failure", args, msg.data);
-                    break;
-                case "success":
-                    mainWindow.webContents.send("icb-cmd-success", args, msg.data);
-                    if (applyDefault(msg.contributeToFrequencyHints, this.contributeToFrequencyHints)) {
-                        addCommandFrequency(args);
-                    }
-                    break;
-                case "open-external":
-                    shell.openExternal(data);
-                    break;
-                case "kill":
-                    app.quit();
-                    break;
+        command.on("success", event => {
+            mainWindow.webContents.send("icb-cmd-success", args, event.message);
+            if (applyDefault(event.contributeToFrequencyHints, true)) {
+                addCommandFrequency(args);
             }
         });
-    });
+        
+        command.on("failure", event => {
+            mainWindow.webContents.send("icb-cmd-failure", args, event.message);
+        });
+
+        command.on("open-external", event => {
+            shell.openExternal(event.resource);
+        });
+
+        command.on("kill", event => {
+            app.quit();
+        });
+
+        // command.on("message", msg => {
+        //     let data = msg.data;
+        //     switch (msg.type) {
+        //         case "translate-window":
+        //             let mainWinPos = mainWindow.getPosition();
+        //             mainWindow.setPosition(mainWinPos[0] + data.x, mainWinPos[1] + data.y);
+        //             break;
+        //         case "failure":
+        //             mainWindow.webContents.send("icb-cmd-failure", args, msg.data);
+        //             break;
+        //         case "success":
+        //             mainWindow.webContents.send("icb-cmd-success", args, msg.data);
+        //             if (applyDefault(msg.contributeToFrequencyHints, this.contributeToFrequencyHints)) {
+        //                 addCommandFrequency(args);
+        //             }
+        //             break;
+        //         case "open-external":
+        //             shell.openExternal(data);
+        //             break;
+        //         case "kill":
+        //             app.quit();
+        //             break;
+        //     }
+
+        command.run(args);
+
+    //    });
+    //});
 }
 
 const Commands = {
@@ -81,18 +98,16 @@ const Commands = {
             let command = this.commands[cmdname]
             if (command !== undefined) {
                 command.run(cmd);
-                //mainWindow.webContents.send("icb-cmd-success", cmd, `Command ${cmdname} ran successfully!`);
             } else {
                 mainWindow.webContents.send("icb-cmd-failure", cmd, `Command ${cmdname} does not exist!`);
             }
         }
     },
-    load: function (directory) {
-        fs.stat(directory).then((stats) => {
-            if (stats.isDirectory()) {
-                let splitDir = path.normalize(directory).split(path.sep);
-                let cmdname = splitDir[splitDir.length - 1];
-                this.commands[cmdname] = new Command(directory, require(path.resolve(directory, "./icb.json")));
+    load: function (file) {
+        fs.stat(file).then((stats) => {
+            if (stats.isFile()) {
+                let cmdname = path.basename(file, ".js");
+                this.commands[cmdname] = new Command(path.resolve(file));
             }
         }).catch((reason) => {
             console.log(reason);

@@ -1,8 +1,0 @@
-{
-    "scripts": [
-        {
-            "filename": "./note.js"
-        }
-    ],
-    "contributeToFrequencyHints": false
-}
