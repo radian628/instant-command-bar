@@ -42,4 +42,8 @@ module.exports = class extends ICBCommand {
             this.failure(`JS Error: ${err}`);
         }
     }
+
+    hint (args) {
+        this.info("\nUsage: eval string:jsexpression\nEvaluates the javascript expression with eval().");
+    }
 }

@@ -7,4 +7,8 @@ module.exports = class Up extends ICBCommand {
         this.translateWindow(Number(args[1]), 0);
         this.success(`Moved right ${args[1]} units.`);
     }
+
+    hint (args) {
+        this.info("\nUsage: right [number:pixels]\nMoves ICB window right.");
+    }
 }

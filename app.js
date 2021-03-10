@@ -57,9 +57,19 @@ Command.prototype.run = function (args) {
     command.run(args);
 }
 
+Command.prototype.hint = function (args) {
+    let command = new this.main();
+
+    command.on("hint", event => {
+        mainWindow.webContents.send("icb-cmd-hint", args, event.message);
+    })
+
+    command.hint(args);
+}
+
 const Commands = {
     commands: {},
-    exec: function (cmd) {
+    run: function (cmd) {
         if (typeof cmd == "string") {
             let cmdname = cmd.split(" ")[0];
             let command = this.commands[cmdname]
@@ -67,6 +77,15 @@ const Commands = {
                 command.run(cmd);
             } else {
                 mainWindow.webContents.send("icb-cmd-failure", cmd, `Command ${cmdname} does not exist!`);
+            }
+        }
+    },
+    hint: function (cmd) {
+        if (typeof cmd == "string") {
+            let cmdname = cmd.split(" ")[0];
+            let command = this.commands[cmdname]
+            if (command !== undefined) {
+                command.hint(cmd);
             }
         }
     },
@@ -83,7 +102,12 @@ const Commands = {
 }
 
 ipcMain.on("exec-icb-cmd", (evt, cmd) => {
-    Commands.exec(cmd);
+    Commands.run(cmd);
+});
+
+ipcMain.on("hint-icb-cmd", (evt, cmd) => {
+    console.log(cmd);
+    Commands.hint(cmd);
 });
 
 ipcMain.on("set-window-height", (evt, height) => {

@@ -48,6 +48,17 @@ ipcRenderer.on("icb-cmd-success", (evt, cmd, result) => {
     setWindowHeight();
 });
 
+ipcRenderer.on("icb-cmd-hint", (evt, cmd, hint) => {
+    instantCommandBar.style.borderColor = "#FFFF00";
+    instantCommandFeedback.className = "out-info";
+    instantCommandFeedback.innerHTML = `<span class="out-cmdname-info">"${cmd}"</span> Hint: <span class="out-context-info">${hint.replace(/\n/g,"<br>")}</span>`;
+    setTimeout(() => {
+        //instantCommandBar.style.transition = "";
+        instantCommandBar.style.borderColor = "#DDDDFF";
+    }, 150);
+    setWindowHeight();
+});
+
 document.addEventListener("keydown", (evt) => {
     if (evt.key == "Enter") {
         ipcRenderer.send("exec-icb-cmd", instantCommandBar.value);
@@ -71,3 +82,7 @@ document.addEventListener("keydown", (evt) => {
         }
     }
 });
+
+instantCommandBar.addEventListener("input", (evt) => {
+    ipcRenderer.send("hint-icb-cmd", instantCommandBar.value);
+})

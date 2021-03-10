@@ -32,6 +32,16 @@ module.exports = class ICBCommand extends EventEmitter {
     }
 
     /**
+     * Displays information on the screen, indicating that either the command is in an intermediate stage of execution, or indicating a help messsage that informs the user of correct command usage.
+     * @param {string} message - Use this to display your information message.
+     */
+    info(message) {
+        this.emit("hint", {
+            message: message
+        });
+    }
+
+    /**
      * Translate the Instant Command Bar window.
      * @param {number} x - Pixels to translate in the X direction.
      * @param {number} y - Pixels to translate in the Y direction.
@@ -66,5 +76,9 @@ module.exports = class ICBCommand extends EventEmitter {
     run() {
         this.failure("Command was configured improperly- Must implement run()!");
         throw new Error("Must implement run()!");
+    }
+
+    hint() {
+        this.info("No hints were configured- consider implementing hint()!");
     }
 }

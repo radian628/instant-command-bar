@@ -82,4 +82,19 @@ module.exports = class extends ICBCommand {
                 break;
         }
     }
+
+    hint(cmd) {
+        let args = cmd.split(" ");
+        switch (args[1]) {
+            case "write":
+                this.info("\nUsage: note write string:message\nSaves a written message. It may contain spaces.");
+                break;
+            case "read":
+                this.info("\nUsage: note read\nOpens a web page containing all your notes.");
+                break;
+            default:
+            this.info("\nUsage: note read|write");
+                break;
+        }
+    }
 }
