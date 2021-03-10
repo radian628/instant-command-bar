@@ -63,3 +63,15 @@ body {
 .out-context-success {
     color: #BBFF99;
 }
+
+.out-info {
+    color: #FFFF88;
+}
+
+.out-cmdname-info {
+    color: #CCCCBB;
+}
+
+.out-context-info {
+    color: #EEEE99;
+}

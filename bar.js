@@ -52,6 +52,11 @@ document.addEventListener("keydown", (evt) => {
     if (evt.key == "Enter") {
         ipcRenderer.send("exec-icb-cmd", instantCommandBar.value);
         cmdStack.push(instantCommandBar.value);
+
+        
+        instantCommandFeedback.className = "out-info";
+        instantCommandFeedback.innerHTML = `<span class="out-cmdname-info">"${instantCommandBar.value}"</span> Info: <span class="out-context-info">Waiting for command...</span>`;
+
         cmdPointer = cmdStack.length;
         instantCommandBar.value = "";
     } else if (evt.key == "ArrowUp") {
