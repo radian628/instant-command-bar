@@ -5,6 +5,68 @@ const childProcess = require("child_process");
 const commandRunFrequencies = require("fs").existsSync("./data/frequencies.json") ? require("./data/frequencies.json") : {};
 const macros = require("fs").existsSync("./data/macros.json") ? require("./data/macros.json") : {};
 
+
+const Commands = {
+    dir: "./commands",
+    commands: {},
+    run: function (cmd) {
+        if (typeof cmd == "string") {
+            cmd = this.applyMacros(cmd);
+            let cmdname = cmd.split(" ")[0];
+            let command = this.commands[cmdname]
+            if (command !== undefined) {
+                command.run(cmd);
+            } else {
+                mainWindow.webContents.send("icb-cmd-failure", cmd, `Command ${cmdname} does not exist!`);
+            }
+        }
+    },
+    hint: function (cmd) {
+        if (typeof cmd == "string") {
+            let cmdname = cmd.split(" ")[0];
+            let command = this.commands[cmdname]
+            if (command !== undefined) {
+                command.hint(cmd);
+            }
+        }
+    },
+    load: function (file) {
+        fs.stat(file).then((stats) => {
+            if (stats.isFile()) {
+                let cmdname = path.parse(file).name;
+                let ext = path.parse(file).ext;
+                if (ext == ".js") {
+                    this.commands[cmdname] = new Command(path.resolve(file));
+                } else if (ext == ".json") {
+                    this.commands[cmdname] = new Multicommand(path.resolve(file));
+                }
+            }
+        }).catch((reason) => {
+            console.log(reason);
+        });
+    },
+    applyMacros: function (str) {
+        let macroList = Object.keys(macros).map(macroName => {
+            return {
+                macroString: "$" + macroName,
+                replaceText: macros[macroName]
+            }
+        });
+        let modified = false;
+        macroList.forEach(macro => {
+            str = str.replaceAll(macro.macroString, () => {
+                modified = true;
+                return macro.replaceText;
+            });
+        });
+        if (modified) {
+            return this.applyMacros(str);
+        } else {
+            return str;
+        }
+    }
+}
+
 let mainWindow;
 
 function applyDefault(value, defaultValue) {
@@ -27,14 +89,15 @@ function addMacro(macroName, replaceText) {
     fs.writeFile("./data/macros.json", JSON.stringify(macros));
 }
 function removeMacro(macroName) {
-    console.log(macroName);
     delete macros[macroName];
     fs.writeFile("./data/macros.json", JSON.stringify(macros));
 }
 
 
 
+
 function Command(file) {
+    console.log(file);
     this.main = require(file);
 }
 
@@ -73,6 +136,10 @@ Command.prototype.run = function (args) {
         removeMacro(event.macroName);
     });
 
+    command.on("reload-command", event => {
+        Commands.load(event.commandPath);
+    });
+
     command.run(args);
 }
 
@@ -81,65 +148,33 @@ Command.prototype.hint = function (args) {
 
     command.on("hint", event => {
         mainWindow.webContents.send("icb-cmd-hint", args, event.message);
-    })
+    });
 
     command.hint(args);
 }
 
-const Commands = {
-    commands: {},
-    run: function (cmd) {
-        if (typeof cmd == "string") {
-            cmd = this.applyMacros(cmd);
-            let cmdname = cmd.split(" ")[0];
-            let command = this.commands[cmdname]
-            if (command !== undefined) {
-                command.run(cmd);
-            } else {
-                mainWindow.webContents.send("icb-cmd-failure", cmd, `Command ${cmdname} does not exist!`);
-            }
-        }
-    },
-    hint: function (cmd) {
-        if (typeof cmd == "string") {
-            let cmdname = cmd.split(" ")[0];
-            let command = this.commands[cmdname]
-            if (command !== undefined) {
-                command.hint(cmd);
-            }
-        }
-    },
-    load: function (file) {
-        fs.stat(file).then((stats) => {
-            if (stats.isFile()) {
-                let cmdname = path.basename(file, ".js");
-                this.commands[cmdname] = new Command(path.resolve(file));
-            }
-        }).catch((reason) => {
-            console.log(reason);
-        });
-    },
-    applyMacros: function (str) {
-        let macroList = Object.keys(macros).map(macroName => {
-            return {
-                macroString: "$" + macroName,
-                replaceText: macros[macroName]
-            }
-        });
-        let modified = false;
-        macroList.forEach(macro => {
-            str = str.replaceAll(macro.macroString, () => {
-                modified = true;
-                return macro.replaceText;
-            });
-        });
-        if (modified) {
-            return this.applyMacros(str);
-        } else {
-            return str;
-        }
-    }
+function Multicommand(file) {
+    this.commands = require(file).commands.map(cmd => {
+        let args = cmd.split(" ");
+        return {
+            cmd: new Command(path.resolve(Commands.dir, args[0] + ".js")),
+            args: cmd
+        };
+    });
 }
+
+Multicommand.prototype.run = function () {
+    this.commands.forEach(cmd => {
+        cmd.cmd.run(cmd.args);
+    });
+}
+
+Multicommand.prototype.hint = function () {
+    mainWindow.webContents.send("icb-cmd-hint", "Info: ", "Hints are currently not supported for multicommands.");
+}
+
+
+
 
 ipcMain.on("exec-icb-cmd", (evt, cmd) => {
     Commands.run(cmd);

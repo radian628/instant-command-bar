@@ -9,6 +9,7 @@ module.exports = class extends ICBCommand {
             return;
         } else {
             this.openExternal(query);
+            this.success(`Opened ${query}!`);
         }
     }
 

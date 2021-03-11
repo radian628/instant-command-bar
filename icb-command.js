@@ -83,6 +83,12 @@ module.exports = class ICBCommand extends EventEmitter {
         });
     }
 
+    reloadCommand(commandPath) {
+        this.emit("reload-command", {
+            commandPath: commandPath
+        });
+    }
+
     /**
      * 
      */

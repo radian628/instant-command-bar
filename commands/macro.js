@@ -47,7 +47,7 @@ module.exports = class extends ICBCommand {
             // } else {
             //     this.failure(`First argument must be 'add' or 'remove'. Value provided was'${args[1]}'`);
             // }
-            this.info("\nUsage: macro add|remove \nAdd or remove a macro.");
+            this.info("\nUsage: macro add|remove ...\nAdd or remove a macro.");
         }
     }
 }
